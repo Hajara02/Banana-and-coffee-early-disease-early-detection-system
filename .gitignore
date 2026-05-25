@@ -1,0 +1,8 @@
+# Android / Gradle
+android-app/.gradle/
+android-app/build/
+android-app/.vscode/
+android-app/local.properties
+
+# Node
+node_modules/

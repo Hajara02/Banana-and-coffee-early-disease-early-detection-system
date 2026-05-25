@@ -1,0 +1,7 @@
+<resources>
+    <style name="Theme.BananaCoffeeAdvisor" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:colorBackground">@color/backgroundColor</item>
+        <item name="android:textColor">@color/primaryText</item>
+        <item name="materialCardViewStyle">@style/Widget.MaterialComponents.CardView</item>
+    </style>
+</resources>

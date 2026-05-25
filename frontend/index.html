@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Banana & Coffee Advisory</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header>
+      <h1>Farm Health Advisor</h1>
+      <p>Early detection and advice for banana bacterial wilt and coffee leaf rust.</p>
+    </header>
+
+    <form id="report-form">
+      <section class="card">
+        <h2>Farmer Details</h2>
+        <label>Farmer name
+          <input type="text" id="farmerName" placeholder="E.g., Jane" />
+        </label>
+        <label>Phone number
+          <input type="tel" id="phone" placeholder="256 7XX XXX XXX" />
+        </label>
+        <label>Location
+          <input type="text" id="location" placeholder="Bushenyi" />
+        </label>
+      </section>
+
+      <section class="card">
+        <h2>Crop</h2>
+        <select id="crop">
+          <option value="banana">Banana</option>
+          <option value="coffee">Coffee</option>
+        </select>
+      </section>
+
+      <section class="card">
+        <h2>Symptoms</h2>
+        <div class="grid">
+          <label><input type="checkbox" id="wilting" /> Leaves wilting</label>
+          <label><input type="checkbox" id="yellowLeaves" /> Yellow leaves</label>
+          <label><input type="checkbox" id="boiledAppearance" /> Boiled or greasy look</label>
+          <label><input type="checkbox" id="ooze" /> Bacterial ooze on stem</label>
+          <label><input type="checkbox" id="rustSpots" /> Rust-colored coffee spots</label>
+          <label><input type="checkbox" id="defoliation" /> Leaves falling</label>
+          <label><input type="checkbox" id="powderyDust" /> Powdery dust on leaves</label>
+          <label><input type="checkbox" id="brownNecrosis" /> Brown necrosis on leaves</label>
+          <label><input type="checkbox" id="stuntedGrowth" /> Stunted growth</label>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Comments</h2>
+        <textarea id="comments" rows="3" placeholder="Add field notes, weather or farm history."></textarea>
+      </section>
+
+      <button type="submit">Submit Report</button>
+    </form>
+
+    <section id="output" class="card output-card hidden">
+      <h2>Detection Result</h2>
+      <div id="result"></div>
+    </section>
+
+    <footer>
+      <small>Prototype system for Bushenyi smallholders.</small>
+    </footer>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>

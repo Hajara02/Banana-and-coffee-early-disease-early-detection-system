@@ -1,0 +1,2 @@
+rootProject.name = "BananaCoffeeAdvisor"
+include ":app"

@@ -1,0 +1,8 @@
+<resources>
+    <color name="backgroundColor">#F7F9FC</color>
+    <color name="primaryText">#111827</color>
+    <color name="secondaryText">#4B5563</color>
+    <color name="buttonColor">#2563EB</color>
+    <color name="buttonText">#FFFFFF</color>
+    <color name="cardBackground">#FFFFFF</color>
+</resources>

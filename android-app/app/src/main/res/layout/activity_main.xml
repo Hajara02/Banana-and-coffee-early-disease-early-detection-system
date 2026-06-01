@@ -28,6 +28,53 @@
             android:textColor="@color/secondaryText" />
 
         <TextView
+            android:id="@+id/farmerNameLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Farmer Name"
+            android:textColor="@color/primaryText" />
+
+        <EditText
+            android:id="@+id/farmerNameInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Jane"
+            android:inputType="textPersonName"
+            android:layout_marginTop="4dp" />
+
+        <TextView
+            android:id="@+id/phoneLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Phone Number"
+            android:textColor="@color/primaryText"
+            android:layout_marginTop="12dp" />
+
+        <EditText
+            android:id="@+id/phoneInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="256 7XX XXX XXX"
+            android:inputType="phone"
+            android:layout_marginTop="4dp" />
+
+        <TextView
+            android:id="@+id/locationLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Location (Subcounty)"
+            android:textColor="@color/primaryText"
+            android:layout_marginTop="12dp" />
+
+        <EditText
+            android:id="@+id/locationInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Bushenyi"
+            android:inputType="text"
+            android:layout_marginTop="4dp" />
+
+        <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Select crop"
@@ -93,19 +140,61 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Brown necrosis" />
-            <CheckBox
+<CheckBox
                 android:id="@+id/stuntedGrowthCheckbox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Stunted growth" />
+            <CheckBox
+                android:id="@+id/rottenPseudostemCheckbox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Rotten pseudostem" />
+            <CheckBox
+                android:id="@+id/leafSpotsCheckbox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Leaf spots" />
         </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Additional notes"
+            android:textColor="@color/primaryText"
+            android:layout_marginTop="12dp" />
+
+        <EditText
+            android:id="@+id/commentsInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Additional notes"
+            android:inputType="textMultiLine"
+            android:minHeight="60dp"
+            android:layout_marginTop="4dp" />
+
+        <Button
+            android:id="@+id/capturePhotoButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Take Photo of Leaf"
+            android:layout_marginTop="16dp"
+            style="@android:style/Widget.DeviceDefault.Button" />
+
+        <ImageView
+            android:id="@+id/photoPreview"
+            android:layout_width="match_parent"
+            android:layout_height="150dp"
+            android:layout_marginTop="8dp"
+            android:scaleType="centerCrop"
+            android:visibility="gone" />
 
         <Button
             android:id="@+id/submitButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Submit Report"
-            android:layout_marginTop="20dp"
+            android:layout_marginTop="16dp"
             android:backgroundTint="@color/buttonColor"
             android:textColor="@color/buttonText" />
 
@@ -136,7 +225,7 @@
                 android:textColor="@color/secondaryText" />
 
             <TextView
-                android:id="@+id/resultRisk"
+                android:id="@+id/resultSeverity"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textColor="@color/secondaryText" />

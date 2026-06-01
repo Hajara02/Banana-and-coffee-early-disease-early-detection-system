@@ -6,3 +6,26 @@ android-app/local.properties
 
 # Node
 node_modules/
+backend/node_modules/
+
+# Python
+__pycache__/
+*.pyc
+backend-python/__pycache__/
+
+# Database
+*.db
+backend-python/farmers.db
+
+# Uploads
+backend-python/uploads/*
+!backend-python/uploads/.gitkeep
+
+# Environment
+.env
+backend/.env
+
+# IDE
+.idea/
+*.iml
+.vscode/

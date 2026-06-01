@@ -1,36 +1,15 @@
 const express = require('express');
-const cors = require('cors');
-const path = require('path');
+const Report = require('../models/Report');
+const User = require('../models/User');
+const { authMiddleware } = require('../middleware/auth');
+const { predictImage } = require('../utils/model');
 
-const app = express();
-const port = process.env.PORT || 4000;
+const router = express.Router();
 
-app.use(cors());
-app.use(express.json({ limit: '50mb' }));
-
-const reports = [];
-const users = {};
-
-function generateUserId() {
-  return 'user_' + Math.random().toString(36).substr(2, 9);
-}
-
-function analyzeImage(photoBase64, crop) {
-  return {
-    prediction: crop === 'banana' ? 'Banana Bacterial Wilt' : 'Coffee Leaf Rust',
-    confidence: 0.85,
-    modelVersion: 'placeholder-v1',
-    note: 'ML model integration pending - using rule-based detection'
-  };
-}
-
-function analyzeSymptoms(data) {
+const analyzeSymptoms = (data) => {
   const crop = data.crop.toLowerCase();
   const symptoms = data.symptoms || {};
-  const score = {
-    banana: 0,
-    coffee: 0
-  };
+  const score = { banana: 0, coffee: 0 };
 
   if (crop === 'banana') {
     if (symptoms.wilting) score.banana += 3;
@@ -122,94 +101,72 @@ function analyzeSymptoms(data) {
   }
 
   return { disease, confidence, risk, advice };
-}
+};
 
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'frontend', 'index.html'));
-});
-
-// Serve static assets (CSS, JS, etc.) from the frontend directory
-app.get('/*.css', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'frontend', req.path));
-});
-app.get('/*.js', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'frontend', req.path));
-});
-
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Banana and coffee advisory backend is running.' });
-});
-
-app.post('/register', (req, res) => {
-  const { farmerName, phone, password } = req.body;
-  if (!farmerName || !phone) {
-    return res.status(400).json({ error: 'Farmer name and phone are required.' });
-  }
-
-  const existingUser = Object.values(users).find(u => u.phone === phone);
-  if (existingUser) {
-    return res.json({ userId: existingUser.id, message: 'User already registered.' });
-  }
-
-  const userId = generateUserId();
-  users[userId] = { id: userId, farmerName, phone, createdAt: new Date().toISOString() };
-  res.json({ userId, message: 'Registration successful.' });
-});
-
-app.post('/login', (req, res) => {
-  const { phone, password } = req.body;
-  const user = Object.values(users).find(u => u.phone === phone);
-  if (user) {
-    res.json({ userId: user.id, farmerName: user.farmerName });
-  } else {
-    res.status(401).json({ error: 'User not found.' });
-  }
-});
-
-app.post('/report', (req, res) => {
+router.post('/report', authMiddleware, async (req, res) => {
   const data = req.body;
 
   if (!data || !data.crop || !data.symptoms) {
     return res.status(400).json({ error: 'Crop and symptoms are required.' });
   }
 
-  const result = analyzeSymptoms(data);
-  const report = {
-    id: reports.length + 1,
-    timestamp: new Date().toISOString(),
-    farmerName: data.farmerName || 'Unknown',
-    phone: data.phone || 'Unknown',
-    location: data.location || 'Unknown',
-    crop: data.crop,
-    symptoms: data.symptoms,
-    notes: data.comments || '',
-    photoBase64: data.photoBase64 || null,
-    gis: data.gis || null,
-    userId: data.userId || null,
-    mlPrediction: data.photoBase64 ? analyzeImage(data.photoBase64, data.crop) : null,
-    outcome: result
-  };
+  try {
+    const reportOwner = await User.findById(req.user.id);
+    if (!reportOwner) {
+      return res.status(401).json({ error: 'Invalid user.' });
+    }
 
-  reports.push(report);
+    const inferredImage = data.photoBase64 ? await predictImage(data.photoBase64, data.crop) : null;
+    const outcome = analyzeSymptoms(data);
 
-  return res.json({ report, advisory: result });
+    const report = await Report.create({
+      farmerName: reportOwner.farmerName,
+      phone: reportOwner.phone,
+      location: data.location || 'Unknown',
+      crop: data.crop,
+      symptoms: data.symptoms,
+      comments: data.comments || '',
+      gis: data.gis || null,
+      photoBase64: data.photoBase64 || null,
+      userId: reportOwner.id,
+      mlPrediction: inferredImage,
+      outcome
+    });
+
+    return res.json({ report, advisory: outcome });
+  } catch (error) {
+    console.error('Report submission error', error);
+    return res.status(500).json({ error: 'Unable to process report.' });
+  }
 });
 
-app.get('/reports/:userId', (req, res) => {
+router.get('/reports/:userId', authMiddleware, async (req, res) => {
   const userId = req.params.userId;
-  const userReports = reports.filter(r => r.userId === userId);
-  res.json({ count: userReports.length, reports: userReports });
+  if (req.user.role !== 'admin' && req.user.id !== userId) {
+    return res.status(403).json({ error: 'Access denied.' });
+  }
+
+  try {
+    const userReports = await Report.find({ userId }).sort({ createdAt: -1 });
+    res.json({ count: userReports.length, reports: userReports });
+  } catch (error) {
+    console.error('Fetch user reports error', error);
+    res.status(500).json({ error: 'Unable to load reports.' });
+  }
 });
 
-app.get('/reports', (req, res) => {
-  res.json({ count: reports.length, reports });
+router.get('/reports', authMiddleware, async (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Admin access only.' });
+  }
+
+  try {
+    const reports = await Report.find().sort({ createdAt: -1 });
+    res.json({ count: reports.length, reports });
+  } catch (error) {
+    console.error('Fetch reports error', error);
+    res.status(500).json({ error: 'Unable to load all reports.' });
+  }
 });
 
-// 404 handler — always return JSON, never HTML
-app.use((req, res) => {
-  res.status(404).json({ error: `Route ${req.method} ${req.path} not found` });
-});
-
-app.listen(port, () => {
-  console.log(`Backend listening on http://localhost:${port}`);
-});
+module.exports = router;

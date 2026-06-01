@@ -3,70 +3,313 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Banana & Coffee Advisory</title>
+  <title>Crop Health Advisor — Disease Diagnosis</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="app-shell">
-    <header>
-      <h1>Farm Health Advisor</h1>
-      <p>Early detection and advice for banana bacterial wilt and coffee leaf rust.</p>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-icon">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+          <path d="M16 4C12 4 8 8 8 14C8 20 12 24 16 28C20 24 24 20 24 14C24 8 20 4 16 4Z" fill="currentColor" opacity="0.3"/>
+          <path d="M16 8C14 8 12 10 12 14C12 18 14 21 16 23C18 21 20 18 20 14C20 10 18 8 16 8Z" fill="currentColor"/>
+        </svg>
+      </div>
+      <div>
+        <h1>Crop Health Advisor</h1>
+        <p class="header-subtitle">Early detection of Banana Bacterial Wilt &amp; Coffee Leaf Rust</p>
+      </div>
     </header>
 
-    <form id="report-form">
-      <section class="card">
-        <h2>Farmer Details</h2>
-        <label>Farmer name
-          <input type="text" id="farmerName" placeholder="E.g., Jane" />
-        </label>
-        <label>Phone number
-          <input type="tel" id="phone" placeholder="256 7XX XXX XXX" />
-        </label>
-        <label>Location
-          <input type="text" id="location" placeholder="Bushenyi" />
-        </label>
-      </section>
-
-      <section class="card">
-        <h2>Crop</h2>
-        <select id="crop">
-          <option value="banana">Banana</option>
-          <option value="coffee">Coffee</option>
-        </select>
-      </section>
-
-      <section class="card">
-        <h2>Symptoms</h2>
-        <div class="grid">
-          <label><input type="checkbox" id="wilting" /> Leaves wilting</label>
-          <label><input type="checkbox" id="yellowLeaves" /> Yellow leaves</label>
-          <label><input type="checkbox" id="boiledAppearance" /> Boiled or greasy look</label>
-          <label><input type="checkbox" id="ooze" /> Bacterial ooze on stem</label>
-          <label><input type="checkbox" id="rustSpots" /> Rust-colored coffee spots</label>
-          <label><input type="checkbox" id="defoliation" /> Leaves falling</label>
-          <label><input type="checkbox" id="powderyDust" /> Powdery dust on leaves</label>
-          <label><input type="checkbox" id="brownNecrosis" /> Brown necrosis on leaves</label>
-          <label><input type="checkbox" id="stuntedGrowth" /> Stunted growth</label>
+    <!-- Form -->
+    <form id="report-form" novalidate>
+      <!-- Section 1: Farmer Details -->
+      <section class="form-section">
+        <div class="section-header">
+          <span class="section-icon">&#127891;</span>
+          <div>
+            <h2 class="section-title">Farmer Details</h2>
+            <p class="section-desc">Your contact information for follow-up advisory</p>
+          </div>
+        </div>
+        <div class="section-body">
+          <div class="form-row two-col">
+            <div class="form-group">
+              <label for="farmerName">Full Name <span class="required">*</span></label>
+              <div class="input-wrapper">
+                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <input type="text" id="farmerName" placeholder="e.g. Grace Nakato" required />
+              </div>
+              <span class="field-error"></span>
+            </div>
+            <div class="form-group">
+              <label for="phone">Phone Number <span class="required">*</span></label>
+              <div class="input-wrapper">
+                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                <input type="tel" id="phone" placeholder="e.g. 256 712 345 678" required />
+              </div>
+              <span class="field-error"></span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="location">Location (Subcounty / District)</label>
+            <div class="input-wrapper">
+              <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              <input type="text" id="location" placeholder="e.g. Bushenyi, Western Uganda" />
+            </div>
+          </div>
         </div>
       </section>
 
-      <section class="card">
-        <h2>Comments</h2>
-        <textarea id="comments" rows="3" placeholder="Add field notes, weather or farm history."></textarea>
+      <!-- Section 2: Crop Information -->
+      <section class="form-section">
+        <div class="section-header">
+          <span class="section-icon">&#127793;</span>
+          <div>
+            <h2 class="section-title">Crop Information</h2>
+            <p class="section-desc">Select the crop you are inspecting</p>
+          </div>
+        </div>
+        <div class="section-body">
+          <div class="crop-selector">
+            <label class="crop-option">
+              <input type="radio" name="crop" value="banana" checked />
+              <div class="crop-card">
+                <span class="crop-emoji">&#127820;</span>
+                <span class="crop-label">Banana</span>
+                <span class="crop-sub">Banana Bacterial Wilt</span>
+              </div>
+            </label>
+            <label class="crop-option">
+              <input type="radio" name="crop" value="coffee" />
+              <div class="crop-card">
+                <span class="crop-emoji">&#9749;</span>
+                <span class="crop-label">Coffee</span>
+                <span class="crop-sub">Coffee Leaf Rust</span>
+              </div>
+            </label>
+          </div>
+        </div>
       </section>
 
-      <button type="submit">Submit Report</button>
+      <!-- Section 3: Symptoms Assessment -->
+      <section class="form-section">
+        <div class="section-header">
+          <span class="section-icon">&#128300;</span>
+          <div>
+            <h2 class="section-title">Symptoms Assessment</h2>
+            <p class="section-desc">Select all symptoms observed in the field</p>
+          </div>
+        </div>
+        <div class="section-body">
+          <div class="symptoms-filter">
+            <button type="button" class="filter-btn active" data-filter="all">All</button>
+            <button type="button" class="filter-btn" data-filter="banana">Banana</button>
+            <button type="button" class="filter-btn" data-filter="coffee">Coffee</button>
+          </div>
+          <div class="symptoms-grid" id="symptomsGrid">
+            <!-- Banana symptoms -->
+            <label class="symptom-card" data-crop="banana">
+              <input type="checkbox" name="wilting" />
+              <span class="symptom-indicator"></span>
+              <span class="symptom-content">
+                <span class="symptom-icon">&#127794;</span>
+                <span class="symptom-name">Leaves Wilting</span>
+                <span class="symptom-desc">Leaves droop and turn yellow-green</span>
+              </span>
+            </label>
+            <label class="symptom-card" data-crop="banana">
+              <input type="checkbox" name="yellowLeaves" />
+              <span class="symptom-indicator"></span>
+              <span class="symptom-content">
+                <span class="symptom-icon">&#128819;</span>
+                <span class="symptom-name">Yellow Leaves</span>
+                <span class="symptom-desc">Premature yellowing of lower leaves</span>
+              </span>
+            </label>
+            <label class="symptom-card" data-crop="banana">
+              <input type="checkbox" name="boiledAppearance" />
+              <span class="symptom-indicator"></span>
+              <span class="symptom-content">
+                <span class="symptom-icon">&#128293;</span>
+                <span class="symptom-name">Boiled Appearance</span>
+                <span class="symptom-desc">Greasy, water-soaked leaf look</span>
+              </span>
+            </label>
+            <label class="symptom-card" data-crop="banana">
+              <input type="checkbox" name="ooze" />
+              <span class="symptom-indicator"></span>
+              <span class="symptom-content">
+                <span class="symptom-icon">&#128167;</span>
+                <span class="symptom-name">Bacterial Ooze</span>
+                <span class="symptom-desc">Sticky ooze on cut pseudostem</span>
+              </span>
+            </label>
+            <label class="symptom-card" data-crop="banana">
+              <input type="checkbox" name="rottenPseudostem" />
+              <span class="symptom-indicator"></span>
+              <span class="symptom-content">
+                <span class="symptom-icon">&#128169;</span>
+                <span class="symptom-name">Rotten Pseudostem</span>
+                <span class="symptom-desc">Inner stem tissue turns brown/rotten</span>
+              </span>
+            </label>
+            <label class="symptom-card" data-crop="banana">
+              <input type="checkbox" name="stuntedGrowth" />
+              <span class="symptom-indicator"></span>
+              <span class="symptom-content">
+                <span class="symptom-icon">&#128200;</span>
+                <span class="symptom-name">Stunted Growth</span>
+                <span class="symptom-desc">Plant smaller than expected for age</span>
+              </span>
+            </label>
+            <!-- Coffee symptoms -->
+            <label class="symptom-card" data-crop="coffee">
+              <input type="checkbox" name="rustSpots" />
+              <span class="symptom-indicator"></span>
+              <span class="symptom-content">
+                <span class="symptom-icon">&#128308;</span>
+                <span class="symptom-name">Rust-Colored Spots</span>
+                <span class="symptom-desc">Orange/yellow powdery spots on leaves</span>
+              </span>
+            </label>
+            <label class="symptom-card" data-crop="coffee">
+              <input type="checkbox" name="defoliation" />
+              <span class="symptom-indicator"></span>
+              <span class="symptom-content">
+                <span class="symptom-icon">&#127795;</span>
+                <span class="symptom-name">Leaf Defoliation</span>
+                <span class="symptom-desc">Premature leaf drop from branches</span>
+              </span>
+            </label>
+            <label class="symptom-card" data-crop="coffee">
+              <input type="checkbox" name="powderyDust" />
+              <span class="symptom-indicator"></span>
+              <span class="symptom-content">
+                <span class="symptom-icon">&#127788;</span>
+                <span class="symptom-name">Powdery Dust</span>
+                <span class="symptom-desc">Orange powdery spores on leaf undersides</span>
+              </span>
+            </label>
+            <label class="symptom-card" data-crop="coffee">
+              <input type="checkbox" name="brownNecrosis" />
+              <span class="symptom-indicator"></span>
+              <span class="symptom-content">
+                <span class="symptom-icon">&#127462;</span>
+                <span class="symptom-name">Brown Necrosis</span>
+                <span class="symptom-desc">Dead brown patches on leaf surface</span>
+              </span>
+            </label>
+            <label class="symptom-card" data-crop="coffee">
+              <input type="checkbox" name="stuntedGrowth" />
+              <span class="symptom-indicator"></span>
+              <span class="symptom-content">
+                <span class="symptom-icon">&#128200;</span>
+                <span class="symptom-name">Stunted Growth</span>
+                <span class="symptom-desc">Reduced plant vigour and size</span>
+              </span>
+            </label>
+            <label class="symptom-card" data-crop="coffee">
+              <input type="checkbox" name="yellowLeaves" />
+              <span class="symptom-indicator"></span>
+              <span class="symptom-content">
+                <span class="symptom-icon">&#128819;</span>
+                <span class="symptom-name">Yellow Leaves</span>
+                <span class="symptom-desc">General leaf chlorosis</span>
+              </span>
+            </label>
+          </div>
+          <p class="symptoms-hint" id="symptomsHint">Select at least one symptom</p>
+        </div>
+      </section>
+
+      <!-- Section 4: Image-Based Diagnosis -->
+      <section class="form-section">
+        <div class="section-header">
+          <span class="section-icon">&#128247;</span>
+          <div>
+            <h2 class="section-title">Image-Based Diagnosis</h2>
+            <p class="section-desc">Upload a photo of the affected plant part</p>
+          </div>
+        </div>
+        <div class="section-body">
+          <div class="upload-area" id="uploadArea">
+            <input type="file" id="photoInput" accept="image/*" capture="environment" />
+            <div class="upload-placeholder" id="uploadPlaceholder">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+                <polyline points="21 15 16 10 5 21"/>
+              </svg>
+              <p class="upload-title">Drag &amp; drop or tap to upload</p>
+              <p class="upload-hint">Supports JPG, PNG, WEBP — max 16MB</p>
+            </div>
+            <div class="upload-preview" id="uploadPreview">
+              <img id="previewImg" alt="Plant photo preview" />
+              <button type="button" class="upload-remove" id="removePhoto" title="Remove photo">&times;</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 5: Additional Information -->
+      <section class="form-section">
+        <div class="section-header">
+          <span class="section-icon">&#128221;</span>
+          <div>
+            <h2 class="section-title">Additional Information</h2>
+            <p class="section-desc">Any extra notes about the field condition</p>
+          </div>
+        </div>
+        <div class="section-body">
+          <div class="form-group">
+            <label for="comments">Field Observations</label>
+            <div class="input-wrapper">
+              <textarea id="comments" rows="3" placeholder="Describe any other observations — pest presence, weather, soil condition, nearby affected plants..."></textarea>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Submit -->
+      <div class="form-actions">
+        <button type="submit" id="submitBtn" class="btn-primary">
+          <span class="btn-text">Submit Report</span>
+          <span class="btn-loader">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <circle cx="12" cy="12" r="10" stroke-dasharray="31.4 31.4" stroke-linecap="round"/>
+            </svg>
+            Analyzing...
+          </span>
+        </button>
+        <p class="form-footer">Your data is processed securely to generate personalized advisory reports.</p>
+      </div>
     </form>
 
-    <section id="output" class="card output-card hidden">
-      <h2>Detection Result</h2>
-      <div id="result"></div>
-    </section>
-
-    <footer>
-      <small>Prototype system for Bushenyi smallholders.</small>
-    </footer>
+    <!-- Result -->
+    <div id="output" class="result-section hidden">
+      <div class="result-header">
+        <span class="result-badge" id="resultBadge">Detection Result</span>
+        <div class="result-status">
+          <h2 id="resultTitle">—</h2>
+          <div class="result-meta">
+            <span class="meta-item"><strong>Confidence:</strong> <span id="resultConfidence">—</span></span>
+            <span class="meta-item"><strong>Risk:</strong> <span id="resultRisk">—</span></span>
+          </div>
+        </div>
+      </div>
+      <div class="result-body" id="resultContainer">
+        <div class="result-card">
+          <h3>&#128137; Recommended Actions</h3>
+          <ul id="resultList" class="result-list"></ul>
+        </div>
+      </div>
+      <button type="button" class="btn-secondary" onclick="resetForm()">&#128260; Submit Another Report</button>
+    </div>
   </div>
+
+  <script src="ml-model.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

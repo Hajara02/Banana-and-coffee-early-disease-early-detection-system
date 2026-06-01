@@ -1,18 +1,75 @@
 package com.bananaadvisory
 
+import android.Manifest
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.location.Location
+import android.location.LocationManager
 import android.os.Bundle
+import android.provider.MediaStore
 import android.widget.ArrayAdapter
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import com.bananaadvisory.data.AppDatabase
+import com.bananaadvisory.data.ReportEntity
 import com.bananaadvisory.databinding.ActivityMainBinding
+import com.bananaadvisory.network.*
+import com.bananaadvisory.ui.HistoryActivity
+import com.bananaadvisory.ui.LoginActivity
+import com.bananaadvisory.utils.SessionManager
+import com.google.gson.Gson
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.ByteArrayOutputStream
+import java.text.SimpleDateFormat
+import java.util.*
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
+    private lateinit var session: SessionManager
+    private lateinit var db: AppDatabase
+    private var capturedBitmap: Bitmap? = null
+    private var userLocation: Location? = null
+    private var offlineMode = false
+
+    private val takePicture = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        val bitmap = result.data?.extras?.get("data") as? Bitmap
+        if (bitmap != null) {
+            capturedBitmap = bitmap
+            binding.photoPreview.setImageBitmap(capturedBitmap)
+            binding.photoPreview.visibility = android.view.View.VISIBLE
+        }
+    }
+
+    private val requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+        val cameraGranted = permissions[Manifest.permission.CAMERA] ?: false
+        if (cameraGranted) openCamera()
+        if (permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true) getUserLocation()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        session = SessionManager(this)
+        db = AppDatabase.getInstance(this)
+
+        if (!session.isLoggedIn()) {
+            startActivity(Intent(this, LoginActivity::class.java))
+            finish()
+            return
+        }
+
+        binding.farmerNameInput.setText(session.getFarmerName() ?: "")
+        binding.phoneInput.setText(session.getPhone() ?: "")
 
         binding.cropSpinner.adapter = ArrayAdapter(
             this,
@@ -20,19 +77,62 @@ class MainActivity : AppCompatActivity() {
             listOf("Banana", "Coffee")
         )
 
+        binding.capturePhotoButton.setOnClickListener {
+            when {
+                ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED -> openCamera()
+                else -> requestPermissionLauncher.launch(arrayOf(Manifest.permission.CAMERA))
+            }
+        }
+
         binding.submitButton.setOnClickListener {
             val symptoms = collectSymptoms()
             if (symptoms.values.none { it }) {
-                Toast.makeText(this, "Please select at least one symptom.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Please select at least one symptom.", Toast.LENGTH_LONG).show()
                 return@setOnClickListener
             }
+            if (binding.farmerNameInput.text.isNullOrBlank()) {
+                Toast.makeText(this, "Please enter farmer name", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            submitReport(symptoms)
+        }
 
-            val advisory = analyzeReport(
-                binding.cropSpinner.selectedItem.toString().lowercase(),
-                symptoms
-            )
+        binding.historyButton.setOnClickListener {
+            startActivity(Intent(this, HistoryActivity::class.java))
+        }
 
-            showAdvisory(advisory)
+        binding.logoutButton.setOnClickListener {
+            AlertDialog.Builder(this)
+                .setTitle("Logout")
+                .setMessage("Are you sure you want to logout?")
+                .setPositiveButton("Yes") { _, _ ->
+                    session.logout()
+                    startActivity(Intent(this, LoginActivity::class.java))
+                    finish()
+                }
+                .setNegativeButton("No", null)
+                .show()
+        }
+
+        checkLocationPermission()
+    }
+
+    private fun checkLocationPermission() {
+        when {
+            ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED -> getUserLocation()
+            else -> requestPermissionLauncher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION))
+        }
+    }
+
+    private fun openCamera() {
+        val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+        takePicture.launch(intent)
+    }
+
+    private fun getUserLocation() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            val locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
+            userLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER) ?: locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
         }
     }
 
@@ -46,114 +146,150 @@ class MainActivity : AppCompatActivity() {
             "defoliation" to binding.defoliationCheckbox.isChecked,
             "powderyDust" to binding.powderyDustCheckbox.isChecked,
             "brownNecrosis" to binding.brownNecrosisCheckbox.isChecked,
-            "stuntedGrowth" to binding.stuntedGrowthCheckbox.isChecked
+            "stuntedGrowth" to binding.stuntedGrowthCheckbox.isChecked,
+            "rottenPseudostem" to binding.rottenPseudostemCheckbox.isChecked,
+            "leafSpots" to binding.leafSpotsCheckbox.isChecked
         )
     }
 
-    private fun analyzeReport(crop: String, symptoms: Map<String, Boolean>): AdvisoryResult {
-        val score = when (crop) {
-            "banana" -> listOf(
-                symptoms["wilting"].takeIf { it == true }?.let { 3 } ?: 0,
-                symptoms["yellowLeaves"].takeIf { it == true }?.let { 2 } ?: 0,
-                symptoms["boiledAppearance"].takeIf { it == true }?.let { 3 } ?: 0,
-                symptoms["ooze"].takeIf { it == true }?.let { 3 } ?: 0,
-                symptoms["stuntedGrowth"].takeIf { it == true }?.let { 1 } ?: 0,
-            ).sum()
-            "coffee" -> listOf(
-                symptoms["rustSpots"].takeIf { it == true }?.let { 3 } ?: 0,
-                symptoms["defoliation"].takeIf { it == true }?.let { 2 } ?: 0,
-                symptoms["powderyDust"].takeIf { it == true }?.let { 2 } ?: 0,
-                symptoms["brownNecrosis"].takeIf { it == true }?.let { 1 } ?: 0,
-                symptoms["stuntedGrowth"].takeIf { it == true }?.let { 1 } ?: 0,
-            ).sum()
-            else -> 0
-        }
+    private fun bitmapToBase64(bitmap: Bitmap?): String? {
+        if (bitmap == null) return null
+        val outputStream = ByteArrayOutputStream()
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 70, outputStream)
+        return android.util.Base64.encodeToString(outputStream.toByteArray(), android.util.Base64.DEFAULT)
+    }
 
-        return if (crop == "banana") {
-            when {
-                score >= 7 -> AdvisoryResult(
-                    "Banana Bacterial Wilt",
-                    "High",
-                    "Immediate action needed",
-                    listOf(
-                        "Remove and destroy infected banana mats.",
-                        "Disinfect tools after each use.",
-                        "Keep healthy and infected plants separate.",
-                        "Report the infection to local extension officers."
-                    )
+    private fun submitReport(symptoms: Map<String, Boolean>) {
+        binding.submitButton.isEnabled = false
+        binding.submitButton.text = "Submitting..."
+
+        val crop = binding.cropSpinner.selectedItem.toString().lowercase()
+        val comments = binding.commentsInput.text.toString().trim()
+        val location = binding.locationInput.text.toString().trim()
+        val farmerName = binding.farmerNameInput.text.toString().trim()
+        val phone = binding.phoneInput.text.toString().trim()
+        val gis = userLocation?.let { GisDto(it.latitude, it.longitude) }
+        val photoBase64 = bitmapToBase64(capturedBitmap)
+
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val request = ReportRequest(
+                    crop = crop,
+                    symptoms = symptoms,
+                    comments = comments,
+                    location = location,
+                    farmerName = farmerName,
+                    phone = phone,
+                    gis = gis,
+                    photoBase64 = photoBase64
                 )
-                score >= 4 -> AdvisoryResult(
-                    "Possible Banana Bacterial Wilt",
-                    "Medium",
-                    "High risk",
-                    listOf(
-                        "Inspect nearby plants for early symptoms.",
-                        "Avoid irrigation contact with infected material.",
-                        "Clean tools and boots between plots.",
-                        "Monitor the farm closely for changes."
-                    )
-                )
-                else -> AdvisoryResult(
-                    "No strong banana wilt signal detected",
-                    "Low",
-                    "Observe closely",
-                    listOf(
-                        "Continue regular scouting for wilting and oozing.",
-                        "Maintain good farm hygiene.",
-                        "Update the app if new symptoms appear."
-                    )
-                )
-            }
-        } else {
-            when {
-                score >= 7 -> AdvisoryResult(
-                    "Coffee Leaf Rust",
-                    "High",
-                    "Immediate action needed",
-                    listOf(
-                        "Prune and remove infected leaves.",
-                        "Collect and destroy fallen leaves.",
-                        "Apply copper-based fungicide as directed.",
-                        "Improve airflow around coffee plants."
-                    )
-                )
-                score >= 4 -> AdvisoryResult(
-                    "Possible Coffee Leaf Rust",
-                    "Medium",
-                    "High risk",
-                    listOf(
-                        "Check neighbouring plants for rust spots.",
-                        "Remove heavily infected leaves.",
-                        "Avoid overhead irrigation.",
-                        "Monitor the crop daily."
-                    )
-                )
-                else -> AdvisoryResult(
-                    "No strong coffee rust signal detected",
-                    "Low",
-                    "Observe closely",
-                    listOf(
-                        "Maintain good shade and field sanitation.",
-                        "Report new symptoms promptly.",
-                        "Keep track of leaf health and weather patterns."
-                    )
-                )
+
+                val token = session.getToken() ?: ""
+                val response = ApiClient.apiService.submitReport("Bearer $token", request)
+
+                withContext(Dispatchers.Main) {
+                    binding.submitButton.isEnabled = true
+                    binding.submitButton.text = "Submit Report"
+
+                    if (response.isSuccessful && response.body() != null) {
+                        val report = response.body()!!
+                        showAdvisory(report)
+                        Toast.makeText(this@MainActivity, "Report submitted successfully", Toast.LENGTH_SHORT).show()
+                        clearForm()
+                    } else {
+                        saveOfflineAndSync(crop, symptoms, comments, location, farmerName, phone, gis, photoBase64)
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    binding.submitButton.isEnabled = true
+                    binding.submitButton.text = "Submit Report"
+                    saveOfflineAndSync(crop, symptoms, comments, location, farmerName, phone, gis, photoBase64)
+                }
             }
         }
     }
 
-    private fun showAdvisory(advisory: AdvisoryResult) {
-        binding.resultTitle.text = advisory.disease
-        binding.resultConfidence.text = "Confidence: ${advisory.confidence}"
-        binding.resultRisk.text = "Risk: ${advisory.risk}"
-        binding.resultList.text = advisory.advice.joinToString(separator = "\n\n") { "• $it" }
+    private fun saveOfflineAndSync(
+        crop: String, symptoms: Map<String, Boolean>, comments: String,
+        location: String, farmerName: String, phone: String,
+        gis: GisDto?, photoBase64: String?
+    ) {
+        CoroutineScope(Dispatchers.IO).launch {
+            val entity = ReportEntity(
+                userId = session.getUserId(),
+                farmerName = farmerName,
+                phone = phone,
+                location = location,
+                crop = crop,
+                symptoms = Gson().toJson(symptoms),
+                comments = comments,
+                photoBase64 = photoBase64,
+                gisLat = gis?.lat,
+                gisLng = gis?.lng,
+                createdAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US).format(Date()),
+                synced = false,
+                pendingSync = true
+            )
+            db.reportDao().insert(entity)
+            SyncWorker.schedule(this@MainActivity)
+        }
+
+        runOnUiThread {
+            Toast.makeText(this, "Saved offline. Will sync when online.", Toast.LENGTH_LONG).show()
+            clearForm()
+        }
+    }
+
+    private fun showAdvisory(report: ReportResponse) {
+        binding.resultTitle.text = report.diagnosis ?: "Unknown"
+        binding.resultConfidence.text = "Confidence: ${String.format("%.1f", (report.confidence ?: 0.0) * 100)}%"
+        binding.resultSeverity.text = "Severity: ${report.severity?.replaceFirstChar { it.uppercase() } ?: "Unknown"}"
+
+        val advice = buildString {
+            report.advisory?.treatment?.let {
+                if (it.isNotEmpty()) {
+                    appendLine("TREATMENT:")
+                    it.forEachIndexed { i, s -> appendLine("${i + 1}. $s") }
+                    appendLine()
+                }
+            }
+            report.advisory?.prevention?.let {
+                if (it.isNotEmpty()) {
+                    appendLine("PREVENTION:")
+                    it.forEachIndexed { i, s -> appendLine("${i + 1}. $s") }
+                    appendLine()
+                }
+            }
+            report.advisory?.bestPractices?.let {
+                if (it.isNotEmpty()) {
+                    appendLine("BEST PRACTICES:")
+                    it.forEachIndexed { i, s -> appendLine("${i + 1}. $s") }
+                }
+            }
+        }
+        binding.resultList.text = advice
         binding.advisoryCard.visibility = android.view.View.VISIBLE
     }
-}
 
-data class AdvisoryResult(
-    val disease: String,
-    val confidence: String,
-    val risk: String,
-    val advice: List<String>
-)
+    private fun clearForm() {
+        binding.farmerNameInput.setText(session.getFarmerName() ?: "")
+        binding.phoneInput.setText(session.getPhone() ?: "")
+        binding.locationInput.text?.clear()
+        binding.commentsInput.text?.clear()
+        binding.wiltingCheckbox.isChecked = false
+        binding.yellowLeavesCheckbox.isChecked = false
+        binding.boiledAppearanceCheckbox.isChecked = false
+        binding.oozeCheckbox.isChecked = false
+        binding.rustSpotsCheckbox.isChecked = false
+        binding.defoliationCheckbox.isChecked = false
+        binding.powderyDustCheckbox.isChecked = false
+        binding.brownNecrosisCheckbox.isChecked = false
+        binding.stuntedGrowthCheckbox.isChecked = false
+        binding.rottenPseudostemCheckbox.isChecked = false
+        binding.leafSpotsCheckbox.isChecked = false
+        binding.photoPreview.visibility = android.view.View.GONE
+        capturedBitmap = null
+        binding.cropSpinner.setSelection(0)
+    }
+}

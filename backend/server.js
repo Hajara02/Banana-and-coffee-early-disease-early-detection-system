@@ -1,4 +1,5 @@
 const express = require('express');
+const bcrypt = require('bcryptjs');
 const cors = require('cors');
 const path = require('path');
 
@@ -7,6 +8,9 @@ const port = process.env.PORT || 4000;
 
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
+
+// Serve frontend static files from the frontend directory
+app.use(express.static(path.join(__dirname, '..', 'frontend')));
 
 const reports = [];
 const users = {};
@@ -125,44 +129,61 @@ function analyzeSymptoms(data) {
 }
 
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'frontend', 'index.html'));
-});
-
-// Serve static assets (CSS, JS, etc.) from the frontend directory
-app.get('/*.css', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'frontend', req.path));
-});
-app.get('/*.js', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'frontend', req.path));
+  res.sendFile(path.join(__dirname, '..', 'frontend', 'auth.html'));
 });
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'Banana and coffee advisory backend is running.' });
 });
 
-app.post('/register', (req, res) => {
+app.post('/register', async (req, res) => {
   const { farmerName, phone, password } = req.body;
-  if (!farmerName || !phone) {
-    return res.status(400).json({ error: 'Farmer name and phone are required.' });
+  if (!farmerName || !phone || !password) {
+    return res.status(400).json({ error: 'Farmer name, phone and password are required.' });
+  }
+
+  const existingName = Object.values(users).find(u => u.farmerName === farmerName);
+  if (existingName) {
+    return res.status(409).json({ error: 'Farmer name already registered. Please choose a different name.' });
   }
 
   const existingUser = Object.values(users).find(u => u.phone === phone);
   if (existingUser) {
-    return res.json({ userId: existingUser.id, message: 'User already registered.' });
+    return res.status(409).json({ error: 'Phone number already registered.' });
   }
 
-  const userId = generateUserId();
-  users[userId] = { id: userId, farmerName, phone, createdAt: new Date().toISOString() };
-  res.json({ userId, message: 'Registration successful.' });
+  try {
+    const passwordHash = await bcrypt.hash(password, 10);
+    const userId = generateUserId();
+    users[userId] = { id: userId, farmerName, phone, passwordHash, createdAt: new Date().toISOString() };
+    return res.json({ userId, farmerName, phone, message: 'Registration successful.' });
+  } catch (error) {
+    console.error('Register error', error);
+    return res.status(500).json({ error: 'Unable to register user.' });
+  }
 });
 
-app.post('/login', (req, res) => {
-  const { phone, password } = req.body;
-  const user = Object.values(users).find(u => u.phone === phone);
-  if (user) {
-    res.json({ userId: user.id, farmerName: user.farmerName });
-  } else {
-    res.status(401).json({ error: 'User not found.' });
+app.post('/login', async (req, res) => {
+  const { farmerName, password } = req.body;
+  if (!farmerName || !password) {
+    return res.status(400).json({ error: 'Name and password are required.' });
+  }
+
+  const user = Object.values(users).find(u => u.farmerName === farmerName);
+  if (!user) {
+    return res.status(401).json({ error: 'Invalid name or password.' });
+  }
+
+  try {
+    const isValid = await bcrypt.compare(password, user.passwordHash);
+    if (!isValid) {
+      return res.status(401).json({ error: 'Invalid name or password.' });
+    }
+
+    return res.json({ userId: user.id, farmerName: user.farmerName, phone: user.phone, message: 'Login successful.' });
+  } catch (error) {
+    console.error('Login error', error);
+    return res.status(500).json({ error: 'Unable to login.' });
   }
 });
 

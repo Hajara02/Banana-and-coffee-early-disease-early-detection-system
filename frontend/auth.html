@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Crop Health Advisor — Login</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="app-container">
+      <header class="app-header">
+        <div class="header-icon">
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+            <path
+              d="M16 4C12 4 8 8 8 14C8 20 12 24 16 28C20 24 24 20 24 14C24 8 20 4 16 4Z"
+              fill="currentColor"
+              opacity="0.3"
+            />
+            <path
+              d="M16 8C14 8 12 10 12 14C12 18 14 21 16 23C18 21 20 18 20 14C20 10 18 8 16 8Z"
+              fill="currentColor"
+            />
+          </svg>
+        </div>
+        <div>
+          <h1>Crop Health Advisor</h1>
+          <p class="header-subtitle">
+            Early detection of Banana Bacterial Wilt &amp; Coffee Leaf Rust
+          </p>
+        </div>
+      </header>
+
+      <div id="authContainer" class="view auth-view">
+        <div class="auth-card">
+          <div class="auth-tabs">
+            <button type="button" class="auth-tab active" data-target="loginPanel">
+              Login
+            </button>
+            <button type="button" class="auth-tab" data-target="signupPanel">
+              Sign Up
+            </button>
+          </div>
+          <div class="auth-intro">
+            <h2>Welcome, farmer</h2>
+            <p>
+              Sign up or log in to access your dashboard and submit farm reports.
+            </p>
+          </div>
+
+          <div id="loginPanel" class="auth-panel">
+            <div class="form-group">
+              <label for="loginName">Farmer Name</label>
+              <div class="input-wrapper">
+                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+                <input type="text" id="loginName" placeholder="e.g. Grace Nakato" />
+              </div>
+              <span class="field-error" id="loginNameError"></span>
+            </div>
+            <div class="form-group">
+              <label for="loginPassword">Password</label>
+              <div class="input-wrapper">
+                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+                <input type="password" id="loginPassword" placeholder="Enter your password" />
+                <button type="button" class="password-toggle" data-target="loginPassword" aria-label="Toggle password visibility">👁️</button>
+              </div>
+              <span class="field-error" id="loginPasswordError"></span>
+            </div>
+            <span class="auth-error" id="loginError"></span>
+            <button type="button" class="btn-primary" id="loginBtn">Log In</button>
+          </div>
+
+          <div id="signupPanel" class="auth-panel hidden">
+            <div class="form-group">
+              <label for="signupName">Full Name</label>
+              <div class="input-wrapper">
+                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+                <input type="text" id="signupName" placeholder="e.g. Grace Nakato" />
+              </div>
+              <span class="field-error" id="signupNameError"></span>
+            </div>
+            <div class="form-group">
+              <label for="signupPhone">Phone Number</label>
+              <div class="input-wrapper">
+                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                </svg>
+                <input type="tel" id="signupPhone" placeholder="e.g. 256 712 345 678" />
+              </div>
+              <span class="field-error" id="signupPhoneError"></span>
+            </div>
+            <div class="form-group">
+              <label for="signupPassword">Password</label>
+              <div class="input-wrapper">
+                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+                <input type="password" id="signupPassword" placeholder="Create a password" />
+                <button type="button" class="password-toggle" data-target="signupPassword" aria-label="Toggle password visibility">👁️</button>
+              </div>
+              <span class="field-error" id="signupPasswordError"></span>
+            </div>
+            <div class="form-group">
+              <label for="signupConfirmPassword">Confirm Password</label>
+              <div class="input-wrapper">
+                <input type="password" id="signupConfirmPassword" placeholder="Repeat your password" />
+                <button type="button" class="password-toggle" data-target="signupConfirmPassword" aria-label="Toggle password visibility">👁️</button>
+              </div>
+              <span class="field-error" id="signupConfirmError"></span>
+            </div>
+            <span class="auth-error" id="signupError"></span>
+            <button type="button" class="btn-primary" id="signupBtn">Create Account</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="app.js"></script>
+  </body>
+</html>
